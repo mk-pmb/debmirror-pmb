@@ -813,15 +813,17 @@ $post_cleanup=0 if ($debmarshal);
 
 # Display configuration.
 $|=1 if $debug;
+my $upstream_descr = $download_method . '://';
 if ($passwd eq "anonymous@") {
-  if ($download_method eq "http") {
-    say("Mirroring to $mirrordir from $download_method://$host/$remoteroot/");
-  } else {
-    say("Mirroring to $mirrordir from $download_method://$user\@$host/$remoteroot/");
+  unless ($download_method =~ m/^https?$/s) {
+    $upstream_descr .= $user . ':***@';
   }
 } else {
-  say("Mirroring to $mirrordir from $download_method://$user:XXX\@$host/$remoteroot/");
+  $upstream_descr .= $user . '@';
 }
+$upstream_descr .= "$host/$remoteroot/";
+say("Gonna debmirror-pmb from $upstream_descr to $mirrordir");
+
 say("Arches: ".join(",", @arches));
 say("Dists: ".join(",", @dists));
 say("Sections: ".join(",", @sections));
@@ -1018,7 +1020,7 @@ if ($num_errors != 0) {
 }
 
 # Enable caching again for http
-init_connection if ($ua);
+init_connection() if $ua;
 
 # Calculate expected downloads for meta files
 # As we don't actually download most of the meta files (due to getting
@@ -1735,7 +1737,7 @@ sub http_get {
   my $ret=1;
 
   print "$url => " if ($debug);
-  print_percent "Getting: $file... " if $progress or $verbose;
+  print_percent("Getting: $file... ") if $progress or $verbose;
   print "\t #" if $progress;
   if (! $do_dry_run) {
     unlink($file) if (-f $file);
@@ -1776,12 +1778,12 @@ sub ftp_get {
       && $size == $stat[7]
       && $mtime == $stat[9]);   # size and time match
     if ($keep) {
-      print_percent "Keeping: $file\n" if $progress or $verbose;
+      print_percent("Keeping: $file\n") if $progress or $verbose;
       add_bytes_gotten($size);
       return 1;
     }
   }
-  print_percent "Getting: $file" if $progress or $verbose;
+  print_percent("Getting: $file") if $progress or $verbose;
   print "\t #" if $progress;
   my $ret=1;
   if (! $do_dry_run) {
