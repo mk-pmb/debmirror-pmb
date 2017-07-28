@@ -28,7 +28,12 @@ Known issues
 * Is there an upstream issue tracker?
   (In theory it's the one on ubuntu launchpad, which should lead upstream to
   the Debian BTS (Bug Tracking System). Good luck with those.)
-
+* Code quality is quite poor, would require full refactor to develop further.
+  * Loooong conditional sections should go into named subs
+  * Several "FIXME"s
+  * Lots of highly dubious shell commands.
+    * Lacking clarification whether argument is meant as option or operand.
+    * Probably exploitable for remote shell command injection.
 
 
 &nbsp;
