@@ -1,0 +1,8 @@
+c916bb24d89dbf6e21124fe6cedce17d  usr/bin/debmirror
+ce159941db02312cc3be679348e125c1  usr/share/doc/debmirror/NEWS.Debian.gz
+7f7a68d35a59025e03595516a29d43bb  usr/share/doc/debmirror/TODO
+0014f65f7164551d22c572493b2dd5fa  usr/share/doc/debmirror/changelog.gz
+5957fd31f6cb1cda0aec38a05dcf62d7  usr/share/doc/debmirror/copyright
+a1d9d6431d66ce6a5b1ec209bfee467b  usr/share/doc/debmirror/examples/debmirror.conf
+efe01d21517caef24f4411ae8bbb57b3  usr/share/doc/debmirror/mirror_size
+7b5c2950f0460eb4d4caf8aa14a79dd4  usr/share/man/man1/debmirror.1.gz
