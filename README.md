@@ -23,9 +23,8 @@ Usage
 Fixes
 -----
 
-* Detect when `*.gz` files are actually plaintext instead of gzip
-  ([example](http://web.archive.org/web/20170728133446/https://deb.packager.io/gh/pkgr/gogs/dists/trusty/pkgr/binary-amd64/Packages.gz)).
-  If so, don't try (and fail) to decompress them, instead just copy them.
+* Detect [plaintext *.gz files](https://github.com/mk-pmb/debmirror-pmb/issues/1)
+  and just copy them instead of trying (and failing) to decompress them.
 
 
 
