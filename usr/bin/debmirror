@@ -573,6 +573,7 @@ use Storable qw(nstore retrieve);
 use Getopt::Long;
 use File::Temp qw/ tempfile /;
 use File::Path qw(make_path);
+use IO::File;
 use IO::Pipe;
 use IO::Select;
 use LockFile::Simple;
@@ -1661,7 +1662,7 @@ sub check_diff {
   my $ret = 0;
 
   if (-f "$filename.gz") {
-    system_redirect_io("gzip -d", "$filename.gz", "$filename");
+    ungzip_file("$filename");
     if ($size == -s $filename) {
       open HANDLE, $filename or die "$filename: $!";
       $digest->addfile(*HANDLE);
@@ -1912,12 +1913,15 @@ sub rsync_extra_get {
 # unlinks stdout target file first to break hard links
 sub system_redirect_io {
   my ($command, $fromfile, $tofile) = @_;
-
   if (-f $tofile) {
     unlink($tofile) or die "unlink($tofile) failed: $!";
   }
-  my $cmd="$command <$fromfile >$tofile";
-  system("$cmd");
+  shellcmd_or_die("$command <$fromfile >$tofile");
+}
+
+sub shellcmd_or_die {
+  my ($cmd) = @_;
+  system($cmd);
   die "Failed: $cmd\n" if ($? != 0);
 }
 
@@ -2212,7 +2216,7 @@ sub get_index {
   if (exists $file_lists{"$tempdir/$subdir/$file.gz"}{size}) {
     if (!check_lists("$tempdir/$subdir/$file.gz")) {
       if (remote_get("$subdir/$file.gz")) {
-        system_redirect_io("gzip -d", "$tempdir/$subdir/$file.gz", "$tempdir/$subdir/$file");
+        ungzip_file("$tempdir/$subdir/$file");
         if (! $slow_cpu) {
           system_redirect_io("bzip2", "$tempdir/$subdir/$file", "$tempdir/$subdir/$file.bz2");
         }
@@ -2227,7 +2231,7 @@ sub get_index {
     say("Ignoring missing Release file for $subdir/$file.gz");
     push (@errlog,"Ignoring missing Release file for $subdir/$file.gz\n");
     if (remote_get("$subdir/$file.gz")) {
-      system_redirect_io("gzip -d", "$tempdir/$subdir/$file.gz", "$tempdir/$subdir/$file");
+      ungzip_file("$tempdir/$subdir/$file");
     }
   } else {
     if (-f "$subdir/$file.gz") {
@@ -2318,7 +2322,7 @@ sub update_contents {
   }
 
   # Uncompress the Contents file
-  system_redirect_io("gzip -d", "$tempdir/$subdir/$file.gz", "$tempdir/$subdir/$file");
+  ungzip_file("$tempdir/$subdir/$file");
   # Update it
   fetch_and_apply_diffs(0, $subdir, $file);
   # And compress it again
@@ -2861,6 +2865,46 @@ sub say {
 sub debug {
   print $0.': '.join(' ', @_)."\n" if $debug;
 }
+
+sub file_peek {
+  my ($fn, $maxbytes) = @_;
+  my $buf = '';
+  my $fh = IO::File->new($fn, 'r');
+  if (defined($fh)) {
+    read($fh, $buf, $maxbytes);
+    undef $fh;    # close
+  }
+  return $buf;
+}
+
+sub data_looks_like_plaintext {
+  my ($data) = @_;
+  return 1 if $data =~ m~^Package:~;
+  return 0;
+}
+
+sub ungzip_file {
+  my ($dest) = @_;
+  my $src = $dest . '.gz';
+  my $plain = 0;
+  if (-z $src) {
+    say("W: archive file seems to be empty: $src");
+    # ex. http://web.archive.org/web/20170728225900/https://deb.packager.io/gh/pkgr/gogs/dists/trusty/pkgr/binary-i386/Packages.gz
+    $plain = 1;
+  } elsif (data_looks_like_plaintext(file_peek("$src", 32))) {
+    say("W: archive file looks like plaintext: $src");
+    # ex. http://web.archive.org/web/20170728133446/https://deb.packager.io/gh/pkgr/gogs/dists/trusty/pkgr/binary-amd64/Packages.gz
+    $plain = 1;
+  }
+  if ($plain) {
+    shellcmd_or_die("cp --no-target-directory -- $src $dest");
+  } else {
+    shellcmd_or_die("gzip --decompress --keep -- $src");
+  }
+}
+
+
+
 
 =head1 COPYRIGHT
 

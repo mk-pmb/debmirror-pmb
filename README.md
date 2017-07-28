@@ -20,6 +20,14 @@ Usage
 <!--#toc stop="scan" -->
 
 
+Fixes
+-----
+
+* Detect when `*.gz` files are actually plaintext instead of gzip
+  ([example](http://web.archive.org/web/20170728133446/https://deb.packager.io/gh/pkgr/gogs/dists/trusty/pkgr/binary-amd64/Packages.gz)).
+  If so, don't try (and fail) to decompress them, instead just copy them.
+
+
 
 Known issues
 ------------

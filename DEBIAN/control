@@ -1,7 +1,7 @@
-Package: debmirror
-Version: 1:2.16ubuntu1.1
+Package: debmirror-pmb
+Version: 0.1.0
 Architecture: all
-Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
+Maintainer: mk-pmb on github <use-issue-tracker-instead@no.mail.invalid>
 Installed-Size: 161
 Depends: perl (>= 5.10), libnet-perl, libdigest-md5-perl, libdigest-sha-perl, liblockfile-simple-perl, rsync, bzip2, libwww-perl (>= 5.815), libnet-inet6glue-perl
 Recommends: gpgv, patch, ed
