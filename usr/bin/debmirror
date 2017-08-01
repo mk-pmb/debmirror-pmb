@@ -2883,7 +2883,7 @@ sub data_looks_like_plaintext {
   return 0;
 }
 
-sub ungzip_file {
+sub ungzip_file {   # search keyword: gunzip
   my ($dest) = @_;
   my $src = $dest . '.gz';
   my $plain = 0;
@@ -2899,6 +2899,11 @@ sub ungzip_file {
   if ($plain) {
     shellcmd_or_die("cp --no-target-directory -- $src $dest");
   } else {
+    if (-e $dest) {
+      unlink $dest;
+      # ^-- gzip v1.6 can overwrite existing files only with --force
+      #     which would disable unrelated safety checks.
+    }
     shellcmd_or_die("gzip --decompress --keep -- $src");
   }
 }
