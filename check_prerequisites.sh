@@ -17,6 +17,7 @@ function check_prerequisites () {
     HAD_ERRORS+=+
   fi
 
+  [ -n "$HAD_ERRORS" ] || echo "D: Found no problems. It might work!"
   return "${#HAD_ERRORS}"
 }
 
