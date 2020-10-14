@@ -1,5 +1,5 @@
 { "name": "debmirror-pmb",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Improved fork of debmirror",
   "keywords": [ "debmirror" ],
 

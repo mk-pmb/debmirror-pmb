@@ -1728,6 +1728,7 @@ sub http_get {
   my $oldautoflush = $|;
   $| = 1;
   my $file=shift;
+  $file =~ s!^\./+!!;
   my $url;
   if ($user eq 'anonymous'){
     $url="$download_method://${host}/${remoteroot}/${file}";
@@ -1736,6 +1737,15 @@ sub http_get {
     $url="$download_method://${user}:${passwd}\@${host}/${remoteroot}/${file}";
   }
   my $ret=1;
+
+  # ==BEGIN== Workaround for waterfox ===== ===== ===== ===== ===== ===== =====
+  # Bug ticket: https://github.com/mk-pmb/debmirror-pmb/issues/2
+  my $env_modify_url = $ENV{'DM_EVAL_HTTPGET_MODIFY_URL'};
+  if ($env_modify_url) {
+    print("unmodified URL: $url => ") if $debug;
+    map { eval $env_modify_url; die $@ if $@; } ($url);
+  }
+  # ==ENDOF== Workaround for waterfox ===== ===== ===== ===== ===== ===== =====
 
   print "$url => " if ($debug);
   print_percent("Getting: $file... ") if $progress or $verbose;
