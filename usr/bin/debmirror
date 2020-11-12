@@ -778,6 +778,8 @@ if (!($diff_mode eq "none")) {
 
 # Backwards compatibility: remote root dir no longer needs prefix
 $remoteroot =~ s%^[:/]%%;
+my $autoslashed_remoteroot = $remoteroot;
+$autoslashed_remoteroot .= '/' if $remoteroot;
 
 # Post-process arrays. Allow commas to separate values the user entered.
 # If the user entered nothing, provide defaults.
@@ -822,7 +824,7 @@ if ($passwd eq "anonymous@") {
 } else {
   $upstream_descr .= $user . '@';
 }
-$upstream_descr .= "$host/$remoteroot/";
+$upstream_descr .= "$host/$autoslashed_remoteroot";
 say("Gonna debmirror-pmb from $upstream_descr to $mirrordir");
 
 say("Arches: ".join(",", @arches));
@@ -1729,13 +1731,9 @@ sub http_get {
   $| = 1;
   my $file=shift;
   $file =~ s!^\./+!!;
-  my $url;
-  if ($user eq 'anonymous'){
-    $url="$download_method://${host}/${remoteroot}/${file}";
-  }
-  else {
-    $url="$download_method://${user}:${passwd}\@${host}/${remoteroot}/${file}";
-  }
+  my $url = "$download_method://";
+  $url .= "${user}:${passwd}\@" unless ($user eq 'anonymous');
+  $url .= "${host}/${autoslashed_remoteroot}${file}";
   my $ret=1;
 
   # ==BEGIN== Workaround for waterfox ===== ===== ===== ===== ===== ===== =====
