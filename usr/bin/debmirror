@@ -1597,48 +1597,49 @@ sub check_field_filters {
 # It will return true if the tests show the file matches.
 sub check_file {
   my %params=@_;
-  my ($filename, $size)=delete @params{qw{filename size}};
-  if (! -f $filename) {
+  my ($filename, $wantsize)=delete @params{qw{filename size}};
+  unless (-f $filename) {
     say("Missing: $filename") if ($verbose);
     return 0;
   }
-  my $disksize = -s _;
-  if ($size == $disksize || $size == -1) {
-    if ($verify_checksums || $size == -1) {
-      # Prefer checking stronger checksums, and failing that, fall back
-      # to whatever checksums are present and supported, trying to prefer
-      # FOObignum over FOOsmallnum.
-      my ($summer, $checksum);
-      foreach my $checksum_type ("SHA512", "SHA256", "SHA1", reverse sort keys %params) {
-       next unless defined $params{$checksum_type};
-       if (lc $checksum_type eq 'md5sum') {
-         $summer=Digest::MD5->new;
-       }
-       elsif ($checksum_type=~/^sha(\d+)$/i) {
-         # returns undef on unknown/too large SHA type
-         $summer=Digest::SHA->new($1);
-       }
-       if (defined $summer) {
-         $checksum=$params{$checksum_type};
-         last;
-       }
-      }
-      if (! defined $summer) {
-        die "unsupported checksum type(s): ".(join(" ", keys %params))."\n";
-      }
-      open HANDLE, $filename or die "$filename: $!";
-      $summer->addfile(*HANDLE);
-      return 1 if $checksum eq $summer->hexdigest;
-      say(sprintf("Mismatch '$filename': sum is %s, expected %s", $summer->hexdigest, $checksum))
-        if ($verbose);
+  my $disksize = -s $filename;
+  if ($disksize < 0) {
+    say("Failed to measure file size: $filename") if ($verbose);
+    return 0;
+  }
+  if (($wantsize >= 0) and ($wantsize != $disksize)) {
+    say(sprintf("Mismatch '$filename': expected file size %d bytes but found %d (%+g)",
+      $wantsize, $disksize)) if ($verbose);
+    return 0;
+  }
+  return 1 unless ($verify_checksums);
+  # Prefer checking stronger checksums, and failing that, fall back
+  # to whatever checksums are present and supported, trying to prefer
+  # FOObignum over FOOsmallnum.
+  my ($summer, $checksum);
+  my @algos = ("SHA512", "SHA256", "SHA1", reverse sort keys %params);
+  foreach my $checksum_type (@algos) {
+    next unless defined $params{$checksum_type};
+    if (lc $checksum_type eq 'md5sum') {
+       $summer=Digest::MD5->new;
     }
-    else {
-      return 1;
+    elsif ($checksum_type=~/^sha(\d+)$/i) {
+      # returns undef on unknown/too large SHA type
+      $summer=Digest::SHA->new($1);
+    }
+    if (defined $summer) {
+      $checksum=$params{$checksum_type};
+      last;
     }
   }
-  elsif ($verbose) {
-    say(sprintf("Mismatch '$filename': size is %d, expected %d", $disksize, $size));
+  unless (defined $summer) {
+    die "unsupported checksum type(s): ".(join(" ", keys %params))."\n";
   }
+  open HANDLE, $filename or die "$filename: $!";
+  $summer->addfile(*HANDLE);
+  return 1 if $checksum eq $summer->hexdigest;
+  say(sprintf("Mismatch '$filename': sum is %s, expected %s",
+    $summer->hexdigest, $checksum)) if ($verbose);
   return 0;
 }
 
@@ -1751,7 +1752,8 @@ sub http_get {
   if (! $do_dry_run) {
     unlink($file) if (-f $file);
     $ret = $ua->mirror($url, $file);
-    print $ret->status_line . "\n" if ($debug);
+    printf("%s (%s bytes saved)\n", $ret->status_line,
+      (-s $file)) if ($debug);
     if ($ret->is_error) {
       $files{$file} = -1;
       warn "failed " . $ret->status_line . "\n" if ($progress or $verbose);
@@ -2674,7 +2676,10 @@ sub di_add_files {
         $di_files{$image_dir}{$filename}{md5sum} = $md5sum;
 
         # Check against the version currently on the mirror
-        if (check_file(filename => "$image_dir/$filename", size => -1, MD5Sum => $md5sum)) {
+        my $local_ok = check_file(filename => "$image_dir/$filename", size => -1, MD5Sum => $md5sum);
+        say("Integrity check for $image_dir/$filename: "
+          . ($local_ok ? 'ok' : 'FAIL')) if ($verbose);
+        if ($local_ok) {
           $di_files{$image_dir}{$filename}{status} = 1;
         } else {
           $di_files{$image_dir}{$filename}{status} = 0;
