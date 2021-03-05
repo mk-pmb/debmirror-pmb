@@ -1609,7 +1609,7 @@ sub check_file {
   }
   if (($wantsize >= 0) and ($wantsize != $disksize)) {
     say(sprintf("Mismatch '$filename': expected file size %d bytes but found %d (%+g)",
-      $wantsize, $disksize)) if ($verbose);
+      $wantsize, $disksize, $disksize - $wantsize)) if ($verbose);
     return 0;
   }
   return 1 unless ($verify_checksums);
