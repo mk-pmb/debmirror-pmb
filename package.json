@@ -1,0 +1,20 @@
+{ "name": "debmirror-pmb",
+  "version": "0.2.0",
+  "description": "Superseded by https://github.com/mk-pmb/debmirror-salsa-22",
+  "keywords": ["debmirror"],
+
+  "author": "M.K. (https://github.com/mk-pmb)",
+  "homepage": "https://github.com/mk-pmb/debmirror-pmb#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mk-pmb/debmirror-pmb.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mk-pmb/debmirror-pmb/issues"
+  },
+
+  "private": false, "license": "GPL-2+",
+
+
+  "npm vs. BOM = Unexpected token": "-*- coding: UTF-8 -*-"
+}
